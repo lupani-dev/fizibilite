@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Proje asistanı</title>
+<!-- Sabit bağlantı: asistanın o anki adresi adres.json dosyasındadır (bilgisayardaki asistan sunucusu günceller).
+     Asistan açıksa oraya yönlendirir; kapalıysa bunu söyler. Sunumun ya da projenin hiçbir içeriği burada durmaz. -->
+<style>
+  :root { --bg:#0c0d10; --kutu:#16181d; --cizgi:#2b2f37; --yazi:#f1f0ec; --soluk:#8b8d94; --mavi:#3987e5; color-scheme:dark; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f9f9f7; --kutu:#fff; --cizgi:#e1e0d9; --yazi:#0b0b0b; --soluk:#6f6d68; --mavi:#2a78d6; color-scheme:light; } }
+  * { box-sizing:border-box }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--yazi); font-family:"Segoe UI",system-ui,sans-serif; padding:16px }
+  main { width:min(440px,100%); background:var(--kutu); border:1px solid var(--cizgi); border-radius:16px; padding:28px; text-align:center }
+  h1 { font-size:22px; margin:14px 0 8px }
+  p { color:var(--soluk); line-height:1.55; margin:0 0 6px }
+  a.dugme { display:inline-block; margin-top:16px; padding:10px 18px; border-radius:10px; background:var(--mavi); color:#fff; text-decoration:none; font-weight:600 }
+  button { margin-top:16px; font:inherit; padding:10px 18px; border-radius:10px; border:1px solid var(--cizgi); background:transparent; color:var(--yazi); cursor:pointer }
+  .yuz { width:64px; height:64px }
+  .donen { width:22px; height:22px; border:3px solid var(--cizgi); border-top-color:var(--mavi); border-radius:50%; margin:18px auto 0; animation:don 1s linear infinite }
+  @keyframes don { to { transform:rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { .donen { animation:none } }
+</style>
+</head>
+<body>
+<main>
+  <svg class="yuz" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="34" rx="26" ry="23" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/><circle cx="23" cy="31" r="6" fill="none" stroke="#111" stroke-width="2.5"/><circle cx="41" cy="31" r="6" fill="none" stroke="#111" stroke-width="2.5"/><line x1="29" y1="31" x2="35" y2="31" stroke="#111" stroke-width="2.5"/><circle cx="23" cy="31" r="2" fill="#111"/><circle cx="41" cy="31" r="2" fill="#111"/><circle cx="17" cy="40" r="3" fill="#ff9fbe"/><circle cx="47" cy="40" r="3" fill="#ff9fbe"/><path d="M28 43 q4 3 8 0" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>
+  <div id="durum" role="status">
+    <h1>Proje asistanı açılıyor…</h1>
+    <p>Birkaç saniye sürebilir.</p>
+    <div class="donen"></div>
+  </div>
+</main>
+<script>
+(function () {
+  var durum = document.getElementById('durum');
+  function goster(baslik, metin, ek) { durum.innerHTML = '<h1>' + baslik + '</h1><p>' + metin + '</p>' + (ek || ''); }
+  function kapali() {
+    goster('Asistan şu an kapalı', 'Sunumu hazırlayan bilgisayar şu an kapalı ya da yeniden başlıyor. Birkaç dakika sonra tekrar deneyin.',
+      '<button type="button" onclick="location.reload()">Tekrar dene</button>');
+  }
+  // adres.json her seferinde taze alınır (önbellekten eski adres gelmesin)
+  fetch('adres.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (v) {
+    if (!v || !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(v.adres || '')) return kapali();
+    var hedef = v.adres + '/asistan', bitti = false, img = new Image();
+    var son = function (acik) {
+      if (bitti) return; bitti = true;
+      if (acik) { location.replace(hedef); goster('Asistana geçiliyor…', 'Sayfa açılmazsa aşağıdaki düğmeye basın.', '<a class="dugme" href="' + hedef + '">Asistanı aç</a>'); }
+      else kapali();
+    };
+    img.onload = function () { son(true); }; img.onerror = function () { son(false); };
+    setTimeout(function () { son(false); }, 8000);
+    img.src = v.adres + '/ikon.svg?t=' + Date.now(); // asistanın girişsiz verdiği simge: yükleniyorsa asistan açık
+  }).catch(kapali);
+})();
+</script>
+</body>
+</html>
